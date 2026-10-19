@@ -1,0 +1,29 @@
+# Local-only repository preparation records and metadata backups.
+/.local-only/
+/REPOSITORY_PLAN.zh-CN.md
+
+# Python caches and machine-specific build products.
+__pycache__/
+*.py[cod]
+*.so
+*.dll
+*.o
+*.obj
+
+# Generated evaluation outputs and accidentally created option-name files.
+/evaluation/*_eval_run/
+/evaluation/edge_eval_python/--*
+
+# Credentials and local environments.
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+.DS_Store
+Thumbs.db
+
+# Model weights are outside the present release.
+*.pth
+*.pt
+*.ckpt

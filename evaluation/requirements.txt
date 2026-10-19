@@ -1,0 +1,7 @@
+# Direct dependencies inspected from the supplied code.
+# These are not a lock file for the original server environment.
+numpy
+scipy>=1.6.0
+Pillow
+opencv-python-headless
+matplotlib

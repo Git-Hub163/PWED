@@ -1,0 +1,3 @@
+Images/test/A_2007_0.jpg GroundTruths/test/A_2007_0.png
+Images/test/A_2007_0-1.jpg GroundTruths/test/A_2007_0-1.png
+Images/test/A_2007_0-2.jpg GroundTruths/test/A_2007_0-2.png
