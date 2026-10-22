@@ -1,15 +1,33 @@
-# PWED Dataset Subset
+# PWED Data
 
-This repository contains only the subset selected by the authors for the current review snapshot. It does not contain the full PWED dataset.
+## Complete Dataset
 
-| Split | Images | PNG annotations |
+PWED contains **1,208 RGB image-annotation pairs** for pixel-level edge detection in polychrome wood-carving imagery:
+
+- 351 photographs of real wood-carving artworks.
+- 857 high-fidelity synthetic images generated with AI models.
+- 966 training images, 121 validation images and 121 test images.
+- 281 real and 685 synthetic images in the training split.
+- 35 real and 86 synthetic images in each of the validation and test splits.
+
+Each image is stored as a JPG file and has one same-resolution, single-channel PNG annotation. Pixel value 255 denotes an edge and 0 denotes background. The released annotations preserve the original line width and are not skeletonised or morphologically thinned before release.
+
+The complete dataset will be released after paper acceptance. The repository URL is [https://github.com/Git-Hub163/PWED](https://github.com/Git-Hub163/PWED). A DOI is not available yet because the paper has not been accepted.
+
+## Current Display Subset
+
+The files currently stored in this repository are a small display subset for checking file organisation and pairing:
+
+| Split | Image files | PNG annotations |
 | --- | ---: | ---: |
 | train | 3 | 3 |
 | val | 3 | 3 |
 | test | 3 | 3 |
 | Total | 9 | 9 |
 
-## Layout and Pairing
+The subset is not the complete PWED dataset and cannot reproduce the paper's full evaluation results. The evaluation directory contains 3 matching pre-thinned `.mat` labels for the included test samples only.
+
+## Directory Structure
 
 ```text
 data/
@@ -20,22 +38,20 @@ data/
 `-- train_pair_aug.txt
 ```
 
-Pair each image and annotation by split and identical filename stem. `manifest.csv` records the image path, annotation path, and, for the three included test samples, the corresponding evaluation PNG and `.mat` paths. Manifest paths are relative to the repository root. Paths in `splits/*_pairs.txt` are relative to `data/`. Each pair-list line contains `image_path annotation_path`.
+Images and annotations are paired by identical filename stem within each split. The complete release will also provide fixed `ImageSets` lists for the 966/121/121 split.
 
-The three test samples are `A_2007_0`, `A_2007_0-1`, and `A_2007_0-2`. The corresponding `evaluation/GroundTruths/` PNGs are paired with `evaluation/GroundTruths_mat/` MATLAB annotations. The authors supplied the `.mat` files with already-thinned boundaries; they were not regenerated during packaging.
+The training protocol supports 32-fold geometric augmentation from two random-flip states and 16 rotation angles. Any training report should state the crop, padding, augmentation and inference settings used by the model implementation.
 
-`train_pair_aug.txt` is the inherited **30,912-line** full augmentation list. The `aug/` files named there are outside this subset. It is retained as a study record, not a runnable file list for the nine included samples.
+## Annotation Procedure
 
-## Download and Integrity
+Three polychrome wood-carving experts and four annotators produced the annotations. The team trial-annotated 50 images to establish consistent line widths, boundary assignment and texture criteria. Completed annotations underwent two rounds of blind review; approximately 15% required redrawing. Annotation and review took seven months.
 
-Clone [Git-Hub163/PWED](https://github.com/Git-Hub163/PWED), or use **Code > Download ZIP**. Private access requires authorisation. The repository-root `CHECKSUMS.sha256` covers the included JPG, PNG, and `.mat` files. On Linux, run from the repository root:
+## Integrity
+
+`manifest.csv` records the current subset. `splits/` contains relative image-annotation pairs. `CHECKSUMS.sha256` at the repository root covers the currently included JPG, PNG and `.mat` files.
 
 ```bash
 sha256sum --check CHECKSUMS.sha256
 ```
 
-Only filename pairing and byte-level integrity are checked during local packaging. Image dimensions, annotation polarity, and internal `.mat` contents must be validated in the intended server environment. The supplied conversion script treats PNG values greater than 128 as boundary pixels; preserve the actual annotation convention when converting further labels.
-
-## Release Scope
-
-The current snapshot supports inspection of PWED's file layout and a small evaluation once predictions are supplied. It cannot reproduce results obtained on the full test set. Acquisition and annotation details, a formal dataset version/DOI, citation, and data licence should be completed before public release. Private repository access is for author review; it does not establish anonymous reviewer access or fulfil the formal data deposit by itself.
+The full dataset release will add the final archive or data record, version identifier, licence, citation information and complete checksums.
