@@ -10,7 +10,7 @@ The evaluation guide documents the matching tolerance, candidate-point limit, NM
 - [`evaluation/`](evaluation/): metric evaluator, prediction conversion utilities and matching/NMS implementation.
 - [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md): provenance and licence notices for reused evaluation components.
 
-## Open-source Baseline Implementations
+## Baseline Implementations
 
 - [RCF: Richer Convolutional Features for Edge Detection](https://github.com/yun-liu/RCF-PyTorch)
 - [PiDiNet: Pixel Difference Networks for Efficient Edge Detection](https://github.com/hellozhuo/pidinet)
