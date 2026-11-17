@@ -27,7 +27,7 @@ The build requires `g++` and creates `edge_eval_python/cxx/lib/solve_csa.so`, us
 - Ground-truth labels: matching BSDS-format `.mat` files in `/root/ping_gu/GroundTruths_mat/`, containing `groundTruth` and `Boundaries`.
 - Original ground-truth PNGs: `/root/ping_gu/GroundTruths/`, used by the entry point for label inspection.
 - Filenames: prediction stems must match the corresponding `.mat` stems; prediction and label dimensions must agree.
-- Evaluation split: the reported benchmark uses the combined PWED validation and test splits (242 images). Supply the corresponding predictions and labels on the server.
+- Dataset split: PWED uses training and test sets. Evaluation is performed on the test set. Supply the corresponding test predictions and labels on the server.
 
 The evaluator does not automatically rename `_thin` suffixes, transpose predictions or resize mismatched maps. Resolve any method-specific stem or dimension conversion before running evaluation and record it with the experiment settings.
 
