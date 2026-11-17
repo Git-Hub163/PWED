@@ -12,6 +12,6 @@ The upstream README credits:
 - [Piotr Dollar's MATLAB toolbox](https://github.com/pdollar/toolbox) and [edge toolbox](https://github.com/pdollar/edges).
 - [PyTorch HED implementation](https://github.com/xwjabc/hed).
 
-Original source headers and `evaluation/edge_eval_python/cxx/README.md` are retained. The latter contains a non-commercial scientific/educational/artistic-use notice from the extended Berkeley benchmark; some C++ source headers additionally identify GPL version 2 or later. Preserve and assess the component-specific terms rather than assigning one blanket permissive licence to the whole tree. The full release licence choices for PWED data and author-owned code remain to be made before public release.
+Original source headers and `evaluation/edge_eval_python/cxx/README.md` are retained. The latter contains a non-commercial scientific/educational/artistic-use notice from the extended Berkeley benchmark; some C++ source headers additionally identify GPL version 2 or later. Preserve and assess the component-specific terms rather than assigning one blanket permissive licence to the mixed-source evaluation code.
 
-Compiled libraries, Python bytecode, accidental zero-byte option-name files, and nested Git history are excluded from the release. Linux users rebuild the native library from the bundled source. No third-party model training code or checkpoints are vendored; the six baselines are linked from the root README.
+Compiled libraries, Python bytecode, accidental zero-byte option-name files, model checkpoints and dataset files are excluded from this repository. Linux users rebuild the native library from the bundled source.

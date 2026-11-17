@@ -1,95 +1,92 @@
 # PWED Evaluation: ODS, OIS and AP
 
-This directory contains the evaluation implementation used to compute ODS, OIS and AP, together with conversion helpers and a small set of pre-thinned ground-truth `.mat` files. The repository's three `.mat` labels are demonstration samples only; the reported benchmark evaluates the combined validation and test splits of PWED, containing 242 images.
+This guide describes the evaluation code used to compute ODS, OIS and AP. Predictions and ground-truth files are supplied separately on the Linux server; neither dataset samples nor prediction outputs are distributed in this repository.
 
-All six methods use the same evaluation implementation and protocol. This standardises the comparison within the study. The implementation is based on a BSDS-style evaluation framework but uses the study-specific matching implementation documented below.
+The evaluator is applied consistently to all six methods. The public release will identify the code version used for the reported results and document the matching tolerance, candidate-point limit, NMS and thinning settings, threshold grid, and metric aggregation procedures.
 
-## Server Environment
+## Server Setup
 
-Run the evaluation on the Linux cloud server. The local Windows checkout is for code and documentation preparation; it is not used for GPU inference or metric generation.
+Run evaluation on the Linux cloud server. Metric computation consumes saved prediction maps and does not require rerunning model inference.
 
-```text
-Operating system: Ubuntu 20.04
-GPU: 1 × NVIDIA GeForce RTX 4090, 24 GB
-CPU: 16 cores
-Memory: 32 GB RAM
-System disk: 200 GB
-Framework: PyTorch
-```
-
-## Inputs
-
-- Prediction maps: grayscale PNG confidence maps with stems matching the ground-truth `.mat` files.
-- `GroundTruths/*.png`: original PNG labels for the demonstration samples.
-- `GroundTruths_mat/*.mat`: BSDS-format labels containing `groundTruth` and `Boundaries`.
-- Complete evaluation: the full 242-image validation-plus-test set and predictions generated with the corresponding model configurations.
-
-The current repository includes 3 demonstration test samples and their 3 `.mat` labels. It does not include the complete PWED dataset or prediction outputs.
-
-## Build and Run
-
-Install dependencies and build the native NMS library in the server environment:
+Clone this repository on the server. The prediction and ground-truth directories remain under `/root/ping_gu`:
 
 ```bash
+git clone https://github.com/Git-Hub163/PWED.git /root/PWED
 cd /root/ping_gu
-python -m pip install -r /path/to/PWED/evaluation/requirements.txt
+cp -a /root/PWED/evaluation/edge_eval_python/. edge_eval_python/
+python -m pip install -r /root/PWED/evaluation/requirements.txt
 mkdir -p edge_eval_python/cxx/lib
 (cd edge_eval_python/cxx/src && bash build.sh)
 ```
 
-Place prediction PNGs in the selected prediction directory, then run:
+The build requires `g++` and creates `edge_eval_python/cxx/lib/solve_csa.so`, used by the native NMS routine. Build and run this code in the Linux server environment.
+
+## Inputs
+
+- Prediction maps: grayscale PNG confidence maps in a method-specific directory such as `/root/ping_gu/RCF/`.
+- Ground-truth labels: matching BSDS-format `.mat` files in `/root/ping_gu/GroundTruths_mat/`, containing `groundTruth` and `Boundaries`.
+- Original ground-truth PNGs: `/root/ping_gu/GroundTruths/`, used by the entry point for label inspection.
+- Filenames: prediction stems must match the corresponding `.mat` stems; prediction and label dimensions must agree.
+- Evaluation split: the reported benchmark uses the combined PWED validation and test splits (242 images). Supply the corresponding predictions and labels on the server.
+
+The evaluator does not automatically rename `_thin` suffixes, transpose predictions or resize mismatched maps. Resolve any method-specific stem or dimension conversion before running evaluation and record it with the experiment settings.
+
+## Run
+
+Set `PRED_DIR` and `MODEL_NAME` to the prediction folder and method label for each run. The same evaluator and settings are used for all six methods.
 
 ```bash
 cd /root/ping_gu
-rm -rf -- edge_eval_python/impl/__pycache__ U2Net_eval_run
-python /path/to/PWED/evaluation/run_edter_eval.py \
+PRED_DIR=RCF
+MODEL_NAME=RCF
+OUT_DIR=${MODEL_NAME}_eval_run
+rm -rf -- edge_eval_python/impl/__pycache__ "$OUT_DIR"
+python /root/PWED/evaluation/run_edter_eval.py \
   --root /root/ping_gu \
-  --pred_dir U2Net \
+  --pred_dir "$PRED_DIR" \
   --gt_mat_dir GroundTruths_mat \
   --gt_png_dir GroundTruths \
-  --out_dir U2Net_eval_run \
-  --model_name U2Net \
-  --pred_mode auto \
+  --out_dir "$OUT_DIR" \
+  --model_name "$MODEL_NAME" \
+  --pred_mode edge_white \
   --workers -1 \
   --thrs 99 \
   --clean
-cat U2Net_eval_run/summary.txt
+cat "$OUT_DIR/summary.txt"
 ```
 
-`U2Net` is the name used in the supplied example command; it is not an additional baseline in the six-method comparison. For the benchmark methods, replace the prediction directory and model name while preserving the same evaluation code and protocol.
+Choose `--pred_mode edge_white` when high values represent edges and `edge_black` when low values represent edges. `auto` inverts a map when its mean intensity exceeds 0.5; use an explicit mode when the output polarity is known. Repeat the command with each method's prediction directory and model name.
+
+`--clean` recreates the specified output directory. Use a dedicated output path for each method. `--workers -1` uses all available CPU cores, and `--thrs 99` evaluates thresholds from 0.01 through 0.99 in increments of 0.01.
 
 ## Evaluation Protocol
 
-### Prediction conversion
+### Prediction conversion and NMS
 
-Grayscale PNG predictions are converted to float32 values in `[0, 1]` and written to MATLAB files with the key `result`. `--pred_mode edge_white` keeps the polarity; `--pred_mode edge_black` inverts it; `--pred_mode auto` inverts an image when its mean intensity exceeds 0.5. Use an explicit polarity when it is known from the model output.
+Grayscale PNG predictions are normalised to float32 `[0, 1]` and saved as MATLAB files using the key `result`. NMS is applied before metric calculation. It uses triangle smoothing radii 1 and 4, NMS radius 1, border parameter 5 and multiplier 1.01; the resulting map is quantised to 8-bit PNG.
 
-### NMS and thinning
+### Ground-truth and prediction thinning
 
-The entry point applies NMS before metric evaluation. NMS uses the supplied native implementation with triangle smoothing radii 1 and 4, NMS radius 1, border parameter 5 and multiplier 1.01, then writes an 8-bit PNG map.
-
-At each threshold, the NMS map is binarised and processed with the supplied Guo-Hall thinning implementation. The current implementation skips thinning when foreground pixels occupy more than 30% of the binary map. Ground-truth annotations are converted with the same thinning routine before being stored as `.mat` labels; the evaluator then reads those pre-thinned boundaries.
+Ground-truth PNGs are binarised using `pixel value > 128` and thinned with the supplied Guo-Hall routine before conversion to BSDS-format `.mat` files. During evaluation, predictions are thresholded and thinned with the same routine. The current implementation skips thinning when foreground pixels exceed 30% of a binary prediction map.
 
 ### Matching
 
-The evaluator uses greedy one-to-one matching based on KD-tree nearest-neighbour search. The matching tolerance is `0.0075 × sqrt(H² + W²)` pixels, where `H` and `W` are the image dimensions. For each predicted edge point, up to 80 candidate ground-truth points are queried. Predicted points are processed in ascending nearest-candidate distance, and each ground-truth point can be assigned at most once.
-
-This is the common matching procedure for all six methods in this study. It is a study-specific implementation based on the BSDS evaluation framework and should not be interpreted as numerically identical to the original global assignment implementation.
+The evaluator uses greedy one-to-one matching based on KD-tree nearest-neighbour search. The tolerance is `0.0075 × sqrt(H² + W²)` pixels. For each predicted edge point, up to 80 ground-truth candidates are queried; predicted points are processed in ascending nearest-candidate distance, and a ground-truth point can be assigned at most once. This study-specific matcher is based on a BSDS-style framework and is not numerically identical to the original global assignment matcher.
 
 ### Thresholds and metrics
 
-With `--thrs 99`, thresholds are `1/100, 2/100, ..., 99/100`, using `>=` for binarisation. For multiple ground-truth annotations, matched predictions are unioned for precision, while matched and total ground-truth counts are accumulated for recall. PWED supplies one reviewed annotation per image.
+With `--thrs 99`, the threshold grid is 0.01, 0.02, ..., 0.99, using `>=` to binarise maps.
 
-- **ODS:** aggregate counts across images at each threshold. Interpolate precision and recall at 100 positions between adjacent threshold points, then select the maximum dataset-level F-measure.
-- **OIS:** select each image's F-measure-maximising discrete threshold, sum the corresponding match counts across images, then calculate aggregate precision, recall and F-measure. Per-image records also store an interpolated optimum; aggregate OIS uses the discrete-threshold counts.
-- **AP:** deduplicate recall values, interpolate precision at 101 recall positions from 0 to 1, use zero outside the observed recall range, and sum the interpolated values divided by 100. If only one unique recall value remains, AP is zero.
+- **ODS:** aggregate matching counts across images at each threshold, interpolate precision and recall at 100 positions between adjacent threshold points, and report the maximum dataset-level F-measure.
+- **OIS:** select the F-measure-maximising discrete threshold for each image, aggregate the corresponding match counts, and calculate overall precision, recall and F-measure.
+- **AP:** deduplicate recall values, interpolate precision at 101 recall positions from 0 to 1, use zero outside the observed recall range, and sum the interpolated values divided by 100. AP is zero if only one unique recall value remains.
 
-The exact implementation is in `edge_eval_python/impl/edges_eval_dir.py` and `edge_eval_python/impl/correspond_pixels.py`. Clear stale evaluation outputs after changing matching, image stems, shapes or label files.
+PWED provides one reviewed ground-truth annotation per image. The evaluator can read multiple annotations: matched predictions are unioned for precision, while matched and total ground-truth counts are accumulated for recall.
 
 ## Outputs
 
-The evaluation writes converted predictions, NMS maps, per-image threshold records, the aggregate evaluation file and `summary.txt`. The summary reports ODS, OIS, AP and their associated precision/recall values.
+The output directory contains converted predictions, NMS maps, per-image threshold records, aggregate evaluation files and `summary.txt`. The summary reports ODS, OIS, AP and associated precision/recall values. Exact implementation details are in `run_edter_eval.py`, `edge_eval_python/impl/edges_eval_dir.py`, `edge_eval_python/impl/correspond_pixels.py` and `edge_eval_python/nms_process.py`.
 
-## Reproducibility Record
+## Release Record
 
-The public release will record the repository commit used for the paper, complete PWED data version, model checkpoints, prediction-generation commands, matching tolerance, candidate limit, NMS and thinning settings, threshold grid, and metric aggregation rules. The current display subset is intended for repository and workflow inspection; it is not a replacement for the complete 242-image evaluation set.
+The public repository will identify the commit corresponding to the reported results. It will include the evaluator and instructions above; dataset files and predictions are distributed separately. Third-party provenance and applicable notices are listed in [`../THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md).

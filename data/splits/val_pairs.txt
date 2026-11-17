@@ -1,3 +1,0 @@
-Images/val/B_2012_3.jpg GroundTruths/val/B_2012_3.png
-Images/val/B_2012_3-2.jpg GroundTruths/val/B_2012_3-2.png
-Images/val/D_2009_3.jpg GroundTruths/val/D_2009_3.png

@@ -2,6 +2,12 @@
 /.local-only/
 /REPOSITORY_PLAN.zh-CN.md
 
+# Dataset and sample labels remain on the server and are not part of this repository.
+/data/
+/CHECKSUMS.sha256
+/evaluation/GroundTruths/
+/evaluation/GroundTruths_mat/
+
 # Python caches and machine-specific build products.
 __pycache__/
 *.py[cod]

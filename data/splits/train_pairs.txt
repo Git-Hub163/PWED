@@ -1,3 +1,0 @@
-Images/train/B_2012_0.jpg GroundTruths/train/B_2012_0.png
-Images/train/B_2012_0-1.jpg GroundTruths/train/B_2012_0-1.png
-Images/train/B_2012_0-2.jpg GroundTruths/train/B_2012_0-2.png
