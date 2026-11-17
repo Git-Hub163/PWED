@@ -71,7 +71,7 @@ Ground-truth PNGs are binarised using `pixel value > 128` and thinned with the s
 
 ### Matching
 
-The evaluator uses greedy one-to-one matching based on KD-tree nearest-neighbour search. The tolerance is `0.0075 × sqrt(H² + W²)` pixels. For each predicted edge point, up to 80 ground-truth candidates are queried; predicted points are processed in ascending nearest-candidate distance, and a ground-truth point can be assigned at most once. This study-specific matcher is based on a BSDS-style framework and is not numerically identical to the original global assignment matcher.
+The evaluator uses greedy one-to-one matching based on KD-tree nearest-neighbour search. The tolerance is `0.0075 × sqrt(H² + W²)` pixels. For each predicted edge point, up to 80 ground-truth candidates are queried; predicted points are processed in ascending nearest-candidate distance, and a ground-truth point can be assigned at most once. 
 
 ### Thresholds and metrics
 
